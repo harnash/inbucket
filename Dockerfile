@@ -26,7 +26,13 @@ RUN npm run build
 # Run in minimal image
 FROM alpine:3.12
 RUN apk --no-cache add tzdata
+
 WORKDIR /opt/inbucket
+
+RUN addgroup -S inbucket; \
+    adduser -S inbucket -G inbucket -D -u 10000 -h /home/inbucket -s /bin/nologin; \
+    chown -R inbucket:inbucket /opt/inbucket
+
 RUN mkdir bin defaults ui
 COPY --from=builder /build/inbucket bin
 COPY --from=builder /build/ui/dist ui
@@ -54,6 +60,12 @@ EXPOSE 2500 9000 1100
 # Persistent Volumes
 VOLUME /config
 VOLUME /storage
+
+RUN mkdir /config /storage && \
+    chmod 0777 /config  && \
+    chmod 0777 /storage
+
+USER 10000
 
 ENTRYPOINT ["/start-inbucket.sh"]
 CMD ["-logjson"]
